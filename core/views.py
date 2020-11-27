@@ -4,8 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from core.serializers import *
 import requests, json
-from movieCollection.settings.base import credy_password, credy_username
-
+from core.otherRequests import fetchMovies
 
 class UserLoginView(RetrieveAPIView):
 
@@ -32,11 +31,11 @@ class MoviesAPIView(ListAPIView):
 
     def get(self, request):
         page = request.GET.get("page", 1)
-        url = f"https://demo.credy.in/api/v1/maya/movies/?page={page}"
-        response = requests.get(url=url, auth=(credy_username, credy_password))
-        if response.status_code == 200:
-            data = json.loads(response.content)
+        try:
+            data = fetchMovies(page)
             return Response(data, status=status.HTTP_200_OK)
+        except :        
+            return Response({"success" : False, "error" : "maximum retries exceeded"}, status=status.HTTP_400_BAD_REQUEST)
         
 
 
@@ -48,7 +47,7 @@ class CollectionListView(CreateAPIView, ListAPIView):
         collections = Collection.objects.filter(user=request.user)
         serializer = CollectionSerializer(collections, many=True)
         favourite_genres = Movies.objects.filter(collection__user=request.user).order_by("-created")[:3].values_list("genres", flat=True)
-        return Response({"is_sucess" : True, "data" : { "collections" : serializer.data, "favourite_genres" : favourite_genres }})
+        return Response({"sucess" : True, "data" : { "collections" : serializer.data, "favourite_genres" : favourite_genres }})
 
     def post(self, request):
         serializer = MovieCollectionSerializer(data=request.data, context={"user" : request.user})
@@ -92,3 +91,26 @@ class CollectionView(UpdateAPIView, RetrieveAPIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         collection.delete()
         return Response({"success" : True, "message" : "collection deleted successfully"})
+
+
+
+class RequestCounterView(CreateAPIView, RetrieveAPIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        request_count = RequestCounter.objects.all().first()
+        if request_count:
+            return Response({ "requests" : request_count.requests})
+        else:
+            return Response({ "requests" : 0})
+    
+    def post(self, request):
+        request_count = RequestCounter.objects.all().first()
+        if request_count:
+            request_count.requests = 0
+            request_count.save()
+        return Response({ "message" : "request count reset successfully"})
+        
+
+

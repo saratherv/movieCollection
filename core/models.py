@@ -84,3 +84,8 @@ class Movies(models.Model):
         return str(self.title) + " : " + str(self.collection)
 
 
+class RequestCounter(models.Model):
+    requests = models.PositiveIntegerField()
+    
+    def __str__(self):
+        return str(self.requestCount)
