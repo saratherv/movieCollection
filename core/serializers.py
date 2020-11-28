@@ -19,9 +19,15 @@ class UserLoginSerializer(serializers.Serializer):
     def validate(self, data):
         username = data.get("username", None)
         password = data.get("password", None)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            user = User.objects.create_user(**data)
         user = authenticate(username=username, password=password)
         if user is None:
-            user = User.objects.create_user(**data)
+            raise serializers.ValidationError(
+                'User with given username and password does not exists'
+            )
         try:
             payload = JWT_PAYLOAD_HANDLER(user)
             jwt_token = JWT_ENCODE_HANDLER(payload)

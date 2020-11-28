@@ -16,7 +16,7 @@ class UserLoginView(RetrieveAPIView):
         serializer.is_valid(raise_exception=True)
         response = {
             'success' : 'True',
-            'status code' : status.HTTP_200_OK,
+            'status_code' : status.HTTP_200_OK,
             'message': 'User logged in  successfully',
             'token' : serializer.data['token'],
             }
@@ -47,13 +47,13 @@ class CollectionListView(CreateAPIView, ListAPIView):
         collections = Collection.objects.filter(user=request.user)
         serializer = CollectionSerializer(collections, many=True)
         favourite_genres = Movies.objects.filter(collection__user=request.user).order_by("-created")[:3].values_list("genres", flat=True)
-        return Response({"sucess" : True, "data" : { "collections" : serializer.data, "favourite_genres" : favourite_genres }})
+        return Response({"sucess" : True,'status_code' : status.HTTP_200_OK, "data" : { "collections" : serializer.data, "favourite_genres" : favourite_genres }})
 
     def post(self, request):
         serializer = MovieCollectionSerializer(data=request.data, context={"user" : request.user})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"succes" : True, "uuid" : serializer.data["uuid"]})
+        return Response({"succes" : True, 'status_code' : status.HTTP_200_OK, "uuid" : serializer.data["uuid"]})
 
 
 class CollectionView(UpdateAPIView, RetrieveAPIView):
@@ -73,7 +73,7 @@ class CollectionView(UpdateAPIView, RetrieveAPIView):
         if not collection:
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(collection)
-        return Response(serializer.data)
+        return Response({"success" : True, 'status_code' : status.HTTP_200_OK, "data" : serializer.data})
     
     def put(self, request, pk):
         collection = self.get_object(pk)
@@ -82,15 +82,15 @@ class CollectionView(UpdateAPIView, RetrieveAPIView):
         serializer = self.serializer_class(collection, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success" : True, 'status_code' : status.HTTP_200_OK, "data" : serializer.data})
+        return Response({"success" : False, "status_code" : status.HTTP_400_BAD_REQUEST, "error" : serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk):
         collection = self.get_object(pk)
         if not collection:
             return Response(status=status.HTTP_404_NOT_FOUND)
         collection.delete()
-        return Response({"success" : True, "message" : "collection deleted successfully"})
+        return Response({"success" : True, 'status_code' : status.HTTP_200_OK, "message" : "collection deleted successfully"})
 
 
 
@@ -101,7 +101,7 @@ class RequestCounterView(CreateAPIView, RetrieveAPIView):
     def get(self, request):
         request_count = RequestCounter.objects.all().first()
         if request_count:
-            return Response({ "requests" : request_count.requests})
+            return Response({"success" : True, 'status_code' : status.HTTP_200_OK, "requests" : request_count.requests})
         else:
             return Response({ "requests" : 0})
     
@@ -110,7 +110,7 @@ class RequestCounterView(CreateAPIView, RetrieveAPIView):
         if request_count:
             request_count.requests = 0
             request_count.save()
-        return Response({ "message" : "request count reset successfully"})
+        return Response({"success" : True, 'status_code' : status.HTTP_200_OK, "message" : "request count reset successfully"})
         
 
 
