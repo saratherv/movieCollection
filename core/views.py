@@ -47,7 +47,7 @@ class CollectionListView(CreateAPIView, ListAPIView):
         collections = Collection.objects.filter(user=request.user)
         serializer = CollectionSerializer(collections, many=True)
         favourite_genres = Movies.objects.filter(collection__user=request.user).order_by("-created")[:3].values_list("genres", flat=True)
-        return Response({"sucess" : True,'status_code' : status.HTTP_200_OK, "data" : { "collections" : serializer.data, "favourite_genres" : favourite_genres }})
+        return Response({"sucess" : True,'status_code' : status.HTTP_200_OK, "data" : { "collections" : serializer.data, "favourite_genres" : list(favourite_genres) }})
 
     def post(self, request):
         serializer = MovieCollectionSerializer(data=request.data, context={"user" : request.user})
